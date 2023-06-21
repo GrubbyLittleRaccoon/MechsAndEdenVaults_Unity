@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // Further explanation: https://www.youtube.com/watch?v=64NblGkAabk&t=72s
+// This is an alternative mesh generator to our perlin terrain.
+// I think the concept is a bit more oriented to creating perlin textures before applying
+// Don't think I ever got this working unfortunately, seems that this and the working perlin file were created at the same time
 
 [RequireComponent(typeof(MeshFilter))]
 public class MeshGenerator : MonoBehaviour

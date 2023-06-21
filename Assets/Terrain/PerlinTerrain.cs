@@ -28,7 +28,7 @@ public class PerlinTerrain : MonoBehaviour
     // Limit the settings
     private void OnValidate() {
     }
-
+    
     private void Start() {
         netAmp = 0;
         for (int i = 0; i < octaves; i++) {
@@ -37,17 +37,16 @@ public class PerlinTerrain : MonoBehaviour
 
         // Feed the noise into the Terrain component
         terrain = GetComponent<Terrain>();
-        terrain.terrainData = GenerateTerrain(terrain.terrainData); 
+        terrain.terrainData = GenerateTerrain(terrain.terrainData);
     }
 
     void Update(){
         // Add movement for testing
         //offsetX += Time.deltaTime * 0.5f;
-        terrain.terrainData = GenerateTerrain(terrain.terrainData);
+        //terrain.terrainData = GenerateTerrain(terrain.terrainData);
     }
 
-    TerrainData GenerateTerrain (TerrainData terrainData)
-    {
+    TerrainData GenerateTerrain (TerrainData terrainData) {
         terrainData.heightmapResolution = width+1;
         terrainData.size = new Vector3(width, baseAmp*netAmp, height); // Sets the dimensions of the terrain
         terrainData.SetHeights(0, 0, GenerateHeights()); //0,0 is the starting point
@@ -58,8 +57,7 @@ public class PerlinTerrain : MonoBehaviour
     /**
      * Generate a brownian [width, height] array that contains series of heights between 0 and 1
      */
-    float[,] GenerateHeights()
-    {
+    float[,] GenerateHeights() {
         float[,] heights = new float[width, height];
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
@@ -72,15 +70,13 @@ public class PerlinTerrain : MonoBehaviour
                 heights[x, y] = heights[x, y] / netAmp; // Normalise to 0-1
             }
         }
-
         return heights;
     }
 
     /**
      * Calculate perlin offset height for a single x,y point.
      */
-    float CalculateHeight(int x, int y, float scale)
-    {
+    float CalculateHeight(int x, int y, float scale) {
         float xCoord = (((float)x / width) * scale) + offsetX;
         float yCoord = (((float)y / height) * scale) + offsetY;
         return Mathf.PerlinNoise(xCoord, yCoord);
