@@ -9,15 +9,15 @@ public class PerlinTerrain : MonoBehaviour
     public int height = 256;
 
     // Noise settings
-    public int iterations = 5; // Number of noise layers
-    public float baseFreq = 2; // Lowest frequency
+    public int octaves = 5; // Number of perlin octaves. Combining perlin layers is actually fractional brownian motion but whatever
     public float baseAmp = 40; // Amplitude of base hill
-    public float scaleFreq = 3;
-    public float scaleAmp = 0.3f; // Amplitude degradation
+    public float scaleFreq = 3; // Size change over each octave
+    public float scaleAmp = 0.3f; // Amplitude degradation over each octave
 
     public float offsetScale = 2f; // Noisy offset creates ridging
 
-    private float netAmp = 0; // Sigma scaleAmp over iterations
+
+    private float netAmp = 0; // Sum of all scaleAmp over iterations for 0-1 normalisation
 
     // Randomisation
     public float offsetX = 100f;
@@ -27,74 +27,80 @@ public class PerlinTerrain : MonoBehaviour
 
     // Limit the settings
     private void OnValidate() {
-        
     }
-
-    /*
-    private void Start() {
-        offsetX = Random.Range(0f, 9999f);
-        offsetY = Random.Range(0f, 9999f);
-    }*/
 
     private void Start() {
         netAmp = 0;
-        for (int i = 0; i < iterations; i++) {
+        for (int i = 0; i < octaves; i++) {
             netAmp += baseAmp * Mathf.Pow(scaleAmp, i);
         }
 
+        // Feed the noise into the Terrain component
         terrain = GetComponent<Terrain>();
-        terrain.terrainData = GenerateTerrain(terrain.terrainData); // Feed into the terrain component
+        terrain.terrainData = GenerateTerrain(terrain.terrainData); 
     }
 
     void Update(){
-
-        // offsetX += Time.deltaTime * 5f;
+        // Add movement for testing
+        //offsetX += Time.deltaTime * 0.5f;
+        terrain.terrainData = GenerateTerrain(terrain.terrainData);
     }
 
     TerrainData GenerateTerrain (TerrainData terrainData)
     {
         terrainData.heightmapResolution = width+1;
         terrainData.size = new Vector3(width, baseAmp*netAmp, height); // Sets the dimensions of the terrain
-        terrainData.SetHeights(0, 0, GenerateHeights()); //0,0 is the starting point?
+        terrainData.SetHeights(0, 0, GenerateHeights()); //0,0 is the starting point
 
         return terrainData;
     }
 
-    // 2D representing heights for an x,y?
+    /**
+     * Generate a brownian [width, height] array that contains series of heights between 0 and 1
+     */
     float[,] GenerateHeights()
     {
         float[,] heights = new float[width, height];
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                // height values must be between 0 and 1
                 heights[x, y] = 0;
-                for (int i=0; i< iterations; i++) {
+                for (int i=0; i< octaves; i++) {
                     float iterAmp = Mathf.Pow(scaleAmp, i);
                     float iterScale = Mathf.Pow(scaleFreq, i);
-                    // heights[x, y] += (CalculateHeight(x, y, iterScale) * iterAmp);
-                    heights[x, y] += (CalculateOffsetHeight(x, y, iterScale) * iterAmp);
+                    //heights[x, y] += (CalculateOffsetHeight(x, y, iterScale) * iterAmp);
+                    heights[x, y] += (CalculateHeight(x, y, iterScale) * iterAmp);
                 }
-                heights[x, y] = heights[x, y] / netAmp;
+                heights[x, y] = heights[x, y] / netAmp; // Normalise to 0-1
             }
         }
 
         return heights;
     }
 
-    
-    float CalculateHeight(int x, int y, float scale) {
-        float xCoord = (float) x / width * scale + offsetX;
-        float yCoord = (float) y / height * scale + offsetY;
-
+    /**
+     * Calculate perlin offset height for a single x,y point.
+     * Simplistic of CalculateOffsetHeight, consider switching back to this...
+     */
+    float CalculateHeight(int x, int y, float scale)
+    {
+        float xCoord = (((float)x / width) * scale) + offsetX;
+        float yCoord = (((float)y / height) * scale) + offsetY;
         return Mathf.PerlinNoise(xCoord, yCoord);
     }
 
+    /**
+     * Calculate perlin offset height for a single x,y point.
+     * Seems like a gimmicky tweak TBH
+     */
     float CalculateOffsetHeight(int x, int y, float scale) {
-        float xCoord = (float)x / width * scale + offsetX;
-        float yCoord = (float)y / height * scale + offsetY;
+        // Factor in x/y configuration
+        float xCoord = (((float)x / width) * scale ) + offsetX;
+        float yCoord = (((float)y / height) * scale )+ offsetY;
 
         float noiseValue = Mathf.PerlinNoise(xCoord, yCoord)-0.5f; // Returns value between -0.5 to 0.5
 
+        // https://www.youtube.com/watch?v=lctXaT9pxA0
+        // Perlin offset creates structured noise, this is something we might play with eventually
         float noisyOffsetX = xCoord - (noiseValue * offsetScale);
         float noisyOffsetY = yCoord - (noiseValue * offsetScale);
 
