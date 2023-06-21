@@ -463,7 +463,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   width: 256
   height: 256
-  octaves: 2
+  octaves: 5
   baseAmp: 40
   scaleFreq: 3
   scaleAmp: 0.3

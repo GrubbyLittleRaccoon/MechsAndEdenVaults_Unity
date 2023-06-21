@@ -67,8 +67,7 @@ public class PerlinTerrain : MonoBehaviour
                 for (int i=0; i< octaves; i++) {
                     float iterAmp = Mathf.Pow(scaleAmp, i);
                     float iterScale = Mathf.Pow(scaleFreq, i);
-                    //heights[x, y] += (CalculateOffsetHeight(x, y, iterScale) * iterAmp);
-                    heights[x, y] += (CalculateHeight(x, y, iterScale) * iterAmp);
+                    heights[x, y] += (CalculateOffsetHeight(x, y, iterScale) * iterAmp);
                 }
                 heights[x, y] = heights[x, y] / netAmp; // Normalise to 0-1
             }
@@ -79,7 +78,6 @@ public class PerlinTerrain : MonoBehaviour
 
     /**
      * Calculate perlin offset height for a single x,y point.
-     * Simplistic of CalculateOffsetHeight, consider switching back to this...
      */
     float CalculateHeight(int x, int y, float scale)
     {
@@ -90,7 +88,7 @@ public class PerlinTerrain : MonoBehaviour
 
     /**
      * Calculate perlin offset height for a single x,y point.
-     * Seems like a gimmicky tweak TBH
+     * Adds perlin offset to for structured noise (See https://www.youtube.com/watch?v=lctXaT9pxA0)
      */
     float CalculateOffsetHeight(int x, int y, float scale) {
         // Factor in x/y configuration
@@ -99,8 +97,7 @@ public class PerlinTerrain : MonoBehaviour
 
         float noiseValue = Mathf.PerlinNoise(xCoord, yCoord)-0.5f; // Returns value between -0.5 to 0.5
 
-        // https://www.youtube.com/watch?v=lctXaT9pxA0
-        // Perlin offset creates structured noise, this is something we might play with eventually
+        // Consider playing with structured offset noise at some point
         float noisyOffsetX = xCoord - (noiseValue * offsetScale);
         float noisyOffsetY = yCoord - (noiseValue * offsetScale);
 
