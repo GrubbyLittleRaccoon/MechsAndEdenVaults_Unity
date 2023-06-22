@@ -354,9 +354,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 672b7ee35de0db742a503f8968b0d126, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mouseSensitivity: 300
-  playerBody: {fileID: 1389296456}
-  xRotation: 0
 --- !u!1 &674162788
 GameObject:
   m_ObjectHideFlags: 0
@@ -716,13 +713,16 @@ MonoBehaviour:
   controller: {fileID: 1389296457}
   speed: 12
   gravity: -9.81
-  jumpHeight: 1
+  jumpHeight: 3
   groundStick: -2
-  groundCheck: {fileID: 259799352}
+  mouseSensitivity: 300
+  playerBody: {fileID: 1550481352}
+  xRotation: 0
+  groundCheck: {fileID: 674162791}
   groundDistance: 0.4
   groundMask:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 0
 --- !u!1 &1550481348
 GameObject:
   m_ObjectHideFlags: 0
@@ -735,7 +735,7 @@ GameObject:
   - component: {fileID: 1550481351}
   - component: {fileID: 1550481350}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: PlayerCube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
