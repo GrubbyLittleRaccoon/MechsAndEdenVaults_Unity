@@ -1,10 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
-    public CharacterController controller; // Set in inspector
+    public CharacterController controller; // Set in inspector, TODO see if can add programmatically
 
     public float speed = 12f;
     public float gravity = -9.81f; // Note we're using negative gravity
@@ -26,6 +27,25 @@ public class PlayerController : MonoBehaviour
 
     Vector3 velocity;
 
+    // New playerinput stuff
+    PlayerControls playerControls; // Generated from player controls asset
+    Vector2 move;
+    Vector2 rotate;
+
+    // As the game starts, before Start()
+    void Awake()
+    {
+        playerControls = new PlayerControls();
+
+        playerControls.Player.Movement.performed += ctx => move = ctx.ReadValue<Vector2>();
+        playerControls.Player.Movement.canceled += ctx => move = Vector2.zero;
+
+        //playerControls.Player.Jump.performed += ctx => Jump();
+
+        playerControls.Player.Camera.performed += ctx => rotate = ctx.ReadValue<Vector2>();
+        playerControls.Player.Camera.canceled += ctx => rotate = Vector2.zero;
+    }
+
     // Start is called before the first frame update
     void Start()
     {
@@ -34,12 +54,23 @@ public class PlayerController : MonoBehaviour
         cam.localRotation = Quaternion.identity;
     }
 
+    //Enable/disable player input spat out by AI, will research whether useful
+    private void OnEnable()
+    {
+        playerControls.Enable();
+    }
+
+    private void OnDisable()
+    {
+        playerControls.Disable();
+    }
+
     // Update is called once per frame
     void Update()
     {
-        //Section 1: Mouse/Camera input
-        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
-        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
+        //Section 1: /Camera input
+        float mouseX = rotate.x * mouseSensitivity * Time.deltaTime;
+        float mouseY = rotate.y * mouseSensitivity * Time.deltaTime;
 
         // Rotate the entire player on horizontal axis
         transform.Rotate(Vector3.up * mouseX); // Horizontal rotation
@@ -50,11 +81,8 @@ public class PlayerController : MonoBehaviour
         cam.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
 
         // Section 2: Movement input
-        // Gather input for horizontal (side/forward) movement
-        float x = Input.GetAxis("Horizontal");
-        float z = Input.GetAxis("Vertical");
-
-        Vector3 move = (transform.right * x) + (transform.forward * z);
+        Vector3 movement = new Vector3(move.x, 0, move.y);
+        movement = transform.TransformDirection(movement); //???
 
         // Jump
         if (controller.isGrounded)
@@ -64,7 +92,7 @@ public class PlayerController : MonoBehaviour
                 velocity.y = -2f;
             }
 
-            if (Input.GetButtonDown("Jump"))
+            if (playerControls.Player.Jump.triggered)
             {
                 velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
             }
@@ -74,6 +102,6 @@ public class PlayerController : MonoBehaviour
         velocity.y += gravity * Time.deltaTime;
 
         // Apply movement and gravity
-        controller.Move(move * speed * Time.deltaTime + velocity * Time.deltaTime);
+        controller.Move(movement * speed * Time.deltaTime + velocity * Time.deltaTime);
     }
 }
