@@ -37,11 +37,9 @@ public class PlayerController : MonoBehaviour
     {
         playerControls = new PlayerControls();
 
+        // Pulling values defined in inputactions component
         playerControls.Player.Movement.performed += ctx => move = ctx.ReadValue<Vector2>();
         playerControls.Player.Movement.canceled += ctx => move = Vector2.zero;
-
-        //playerControls.Player.Jump.performed += ctx => Jump();
-
         playerControls.Player.Camera.performed += ctx => rotate = ctx.ReadValue<Vector2>();
         playerControls.Player.Camera.canceled += ctx => rotate = Vector2.zero;
     }
