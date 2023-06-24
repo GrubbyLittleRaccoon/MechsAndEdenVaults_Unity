@@ -28,13 +28,15 @@ public class PlayerController : MonoBehaviour
     Vector3 velocity;
 
     // New playerinput stuff
-    PlayerControls playerControls; // Generated from player controls asset
+    //PlayerControls playerControls; // Generated from player controls asset
+    PlayerInput playerInput;
     Vector2 move;
     Vector2 rotate;
 
     // As the game starts, before Start()
     void Awake()
     {
+        /*
         playerControls = new PlayerControls();
 
         // Pulling values defined in inputactions component
@@ -42,25 +44,22 @@ public class PlayerController : MonoBehaviour
         playerControls.Player.Movement.canceled += ctx => move = Vector2.zero;
         playerControls.Player.Camera.performed += ctx => rotate = ctx.ReadValue<Vector2>();
         playerControls.Player.Camera.canceled += ctx => rotate = Vector2.zero;
-    }
+        */
 
-    // Start is called before the first frame update
-    void Start()
-    {
+        playerInput = GetComponent<PlayerInput>();
+        Debug.Log("playerInput: " + playerInput);
+        // Link actions to methods
+        playerInput.actions["Movement"].performed += ctx => OnMove(ctx.ReadValue<Vector2>());
+        playerInput.actions["Movement"].canceled += ctx => OnMove(Vector2.zero);
+
+        playerInput.actions["Camera"].performed += ctx => OnLook(ctx.ReadValue<Vector2>());
+        playerInput.actions["Camera"].canceled += ctx => OnLook(Vector2.zero);
+
+        playerInput.actions["Jump"].performed += ctx => OnJump();
+
+
         Cursor.lockState = CursorLockMode.Locked;
-        // This line will set the camera rotation to the "default" upright position
         cam.localRotation = Quaternion.identity;
-    }
-
-    //Enable/disable player input spat out by AI, will research whether useful
-    private void OnEnable()
-    {
-        playerControls.Enable();
-    }
-
-    private void OnDisable()
-    {
-        playerControls.Disable();
     }
 
     // Update is called once per frame
@@ -89,11 +88,6 @@ public class PlayerController : MonoBehaviour
             {
                 velocity.y = -2f;
             }
-
-            if (playerControls.Player.Jump.triggered)
-            {
-                velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-            }
         }
 
         // Apply gravity
@@ -101,5 +95,27 @@ public class PlayerController : MonoBehaviour
 
         // Apply movement and gravity
         controller.Move(movement * speed * Time.deltaTime + velocity * Time.deltaTime);
+    }
+
+    private void OnMove(Vector2 moveValue)
+    {
+        Debug.Log("OnMove");
+        move = moveValue;
+    }
+
+    private void OnLook(Vector2 rotateValue)
+    {
+        Debug.Log("OnLook");
+        rotate = rotateValue;
+    }
+
+    private void OnJump()
+    {
+        Debug.Log("OnJump");
+
+        if (controller.isGrounded)
+        {
+            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        }
     }
 }
