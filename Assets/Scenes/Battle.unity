@@ -224,6 +224,12 @@ Camera:
     type: 3}
   m_PrefabInstance: {fileID: 8882496595272213185}
   m_PrefabAsset: {fileID: 0}
+--- !u!4 &534669905 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5885817105295914151, guid: 93465d9caa133534799cc9bf1b38a88d,
+    type: 3}
+  m_PrefabInstance: {fileID: 8882496595272213185}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &674162788
 GameObject:
   m_ObjectHideFlags: 0
@@ -410,7 +416,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1091663061}
-  - component: {fileID: 1091663060}
   - component: {fileID: 1091663062}
   m_Layer: 0
   m_Name: GameManager
@@ -419,22 +424,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1091663060
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1091663059}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 04416b02f279b5547a030b5258f0a5e4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  player1Camera: {fileID: 534669904}
-  player2Camera: {fileID: 0}
-  player3Camera: {fileID: 0}
-  player4Camera: {fileID: 0}
 --- !u!4 &1091663061
 Transform:
   m_ObjectHideFlags: 0
@@ -625,8 +614,13 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2651736242420904918, guid: 93465d9caa133534799cc9bf1b38a88d,
         type: 3}
+      propertyPath: m_NotificationBehavior
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2651736242420904918, guid: 93465d9caa133534799cc9bf1b38a88d,
+        type: 3}
       propertyPath: m_NeverAutoSwitchControlSchemes
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5011556384284034324, guid: 93465d9caa133534799cc9bf1b38a88d,
         type: 3}
@@ -636,7 +630,7 @@ PrefabInstance:
     - target: {fileID: 6265850034417599488, guid: 93465d9caa133534799cc9bf1b38a88d,
         type: 3}
       propertyPath: m_Name
-      value: Playercamera
+      value: PlayerCameraRig
       objectReference: {fileID: 0}
     - target: {fileID: 8511157886084782010, guid: 93465d9caa133534799cc9bf1b38a88d,
         type: 3}
@@ -695,9 +689,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9085374195275303475, guid: 93465d9caa133534799cc9bf1b38a88d,
         type: 3}
+      propertyPath: cam
+      value: 
+      objectReference: {fileID: 534669905}
+    - target: {fileID: 9085374195275303475, guid: 93465d9caa133534799cc9bf1b38a88d,
+        type: 3}
       propertyPath: groundCheck
       value: 
       objectReference: {fileID: 674162791}
+    - target: {fileID: 9181926556815336030, guid: 93465d9caa133534799cc9bf1b38a88d,
+        type: 3}
+      propertyPath: m_Name
+      value: PlayerCube
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
