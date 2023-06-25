@@ -27,8 +27,7 @@ public class PlayerController : MonoBehaviour
 
     Vector3 velocity;
 
-    // New playerinput stuff
-    //PlayerControls playerControls; // Generated from player controls asset
+    // Input handling
     PlayerInput playerInput;
     Vector2 move;
     Vector2 look;
