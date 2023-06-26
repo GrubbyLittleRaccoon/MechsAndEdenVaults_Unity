@@ -24,8 +24,7 @@ public class PlayerController : MonoBehaviour
     public float groundDistance = 0.4f; // Radius of ground checking sphere
     public LayerMask groundMask; // Control what objects to check for
     bool isGrounded;
-
-    Vector3 velocity;
+    Vector3 velocity; // Currently only really used for vertical component, but keeping separate from movement input for future mobility equipment
 
     // Input handling
     PlayerInput playerInput;
