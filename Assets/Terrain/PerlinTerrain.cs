@@ -55,13 +55,16 @@ public class PerlinTerrain : MonoBehaviour
     {
         terrainData.heightmapResolution = width + 1;
         terrainData.size = new Vector3(width, baseAmp * netAmp, length); // Sets the dimensions of the terrain
-        terrainData.SetHeights(0, 0, GenerateHeights()); //0,0 is the starting point
+        float[,] generatedHeights = GenerateHeights();
+        terrainData.SetHeights(0, 0, generatedHeights); //0,0 is the starting point
+
+        SetTextureWeights(terrain.terrainData, generatedHeights); // Texture stuff based on height
 
         return terrainData;
     }
 
     /**
-     * Generate a brownian [width, height] array that contains series of heights between 0 and 1
+     * Generate a warped brownian [width, height] array that contains series of heights between 0 and 1
      */
     float[,] GenerateHeights()
     {
@@ -111,6 +114,49 @@ public class PerlinTerrain : MonoBehaviour
         float noisyOffsetY = yCoord - (noiseValue * offsetScale);
 
         return Mathf.PerlinNoise(noisyOffsetX, noisyOffsetY);
+    }
+
+    /**
+     * Set the texture details for the terrain based on generated heights.
+     */
+    void SetTextureWeights(TerrainData terrainData, float[,] heights)
+    {
+        int alphaMapWidth = terrainData.alphamapWidth;
+        int alphaMapHeight = terrainData.alphamapHeight;
+        int numTextures = terrainData.terrainLayers.Length;
+
+        float[,,] alphaMap = new float[alphaMapWidth, alphaMapHeight, numTextures];
+
+        for (int y = 0; y < alphaMapHeight; y++)
+        {
+            for (int x = 0; x < alphaMapWidth; x++)
+            {
+                float normX = x * 1.0f / (alphaMapWidth - 1);
+                float normY = y * 1.0f / (alphaMapHeight - 1);
+
+                float angle = terrainData.GetSteepness(normY, normX);
+                int terrainHeight = (int)(heights[x, y] * terrainData.size.y);
+
+                float[] weights = new float[numTextures];
+
+                // Here you can set the weights based on height or angle
+                // For example:
+                weights[0] = terrainHeight <= 20 ? 1 : 0; // grass
+                weights[1] = terrainHeight > 20 && terrainHeight <= 40 ? 1 : 0; // rock
+                weights[2] = terrainHeight > 40 ? 1 : 0; // snow
+
+                // Normalize the weights
+                float totalWeight = 0;
+                foreach (float weight in weights) totalWeight += weight;
+                for (int i = 0; i < weights.Length; i++)
+                {
+                    weights[i] /= totalWeight;
+                    alphaMap[x, y, i] = weights[i];
+                }
+            }
+        }
+
+        terrainData.SetAlphamaps(0, 0, alphaMap);
     }
 }
 

@@ -297,7 +297,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   width: 256
-  height: 256
+  length: 256
   octaves: 5
   baseAmp: 40
   scaleFreq: 3
