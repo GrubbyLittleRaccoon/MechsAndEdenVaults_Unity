@@ -23,12 +23,9 @@ public class PerlinTerrain : MonoBehaviour
 
     private void Start()
     {
-        // Feed the noise into the Terrain component
         terrain.terrainData = GenerateTerrain();
-        // Centre the position of the Terrain around 0,0 after generating up.
-        // If you change this, note that generationg is world position sensitive
+        // Centre the position of the Terrain around 0,0
         terrain.transform.position = new Vector3(-width / 2, 0, -length / 2);
-
         // Set terrain collider based on generated data
         SetTerrainCollider(terrain.terrainData);
     }
@@ -36,12 +33,9 @@ public class PerlinTerrain : MonoBehaviour
     //Generally only triggered when scene view/inspector is up (non runtime)
     private void OnValidate()
     {
-        // Feed the noise into the Terrain component
         terrain.terrainData = GenerateTerrain();
-        // Centre the position of the Terrain around 0,0 after generating up.
-        // If you change this, note that generation is world position sensitive
+        // Centre the position of the Terrain around 0,0
         terrain.transform.position = new Vector3(-width / 2, 0, -length / 2);
-
         // Set terrain collider based on generated data
         SetTerrainCollider(terrain.terrainData);
     }
@@ -58,12 +52,19 @@ public class PerlinTerrain : MonoBehaviour
         terrainCollider.terrainData = terrainData;
     }
 
+    /**
+     * Our custom terrain generation function - heights and texture.
+     * Assumption is that mesh resolution = 1:1.
+     */
     private TerrainData GenerateTerrain()
     {
         TerrainData terrainData = new TerrainData();
         terrainData.heightmapResolution = width + 1;
         terrainData.size = new Vector3(width, baseAmp, length); // Sets the dimensions of the terrain
-        terrainData.SetHeights(0, 0, GenerateHeights()); //0,0 is the starting point
+        terrainData.SetHeights(0, 0, GenerateHeights());
+        // Calculate the offset to center the terrain
+        float centreOffsetX = -width / 2f;
+        float centreOffsetZ = -length / 2f;
 
         //SetTextureWeights(terrainData, generatedHeights); // TODO Texture alpha mapping based on height to implement later on
 
@@ -87,22 +88,22 @@ public class PerlinTerrain : MonoBehaviour
         float[,] heights = new float[width, length];
         for (int x = 0; x < width; x++)
         {
-            for (int y = 0; y < length; y++)
+            for (int z = 0; z < length; z++)
             {
-                heights[x, y] = 0;
+                heights[x, z] = 0;
                 for (int i = 0; i < octaves; i++)
                 {
                     float iterAmp = Mathf.Pow(scaleAmp, i);
                     float iterFreq = baseFreq * Mathf.Pow(scaleFreq, i);
-                    heights[x, y] += (CalculateOffsetHeight(x, y, iterFreq) * iterAmp); // Return 0 to 1 value...
+                    heights[x, z] += (CalculateOffsetHeight(x, z, iterFreq) * iterAmp); // Return 0 to 1 value...
                 }
-                heights[x, y] = heights[x, y] / netAmp; // Normalise heights
+                heights[x, z] = heights[x, z] / netAmp; // Normalise heights
             }
         }
 
-        printRange(heights);
         return heights;
     }
+
 
     /**
      * Calculate perlin height (between 0-1) for a single x,y point.
