@@ -1,6 +1,5 @@
 using UnityEngine;
 
-
 //Tutorial: https://www.youtube.com/watch?v=vFvwyu_ZKfU
 public class PerlinTerrain : MonoBehaviour
 {
@@ -9,65 +8,82 @@ public class PerlinTerrain : MonoBehaviour
     public int length = 256;
 
     // Noise settings
-    public int octaves = 5; // Number of perlin octaves. Combining perlin layers is actually fractional brownian motion but whatever
-    public float baseAmp = 40; // Amplitude of base hill
-    public float scaleFreq = 3; // Size change over each octave
+    public int octaves = 5; // Number of perlin octaves. Combining perlin layers = fractional brownian motion
+    public float baseAmp = 40f; // Basic amplitude = overall linear scaling factor
+    public float baseFreq = 1f;
+    public float scaleFreq = 3; // Frequency increase over each octave
     public float scaleAmp = 0.3f; // Amplitude degradation over each octave
-
-    public float offsetScale = 2f; // Noisy offset creates ridging
-
-
-    private float netAmp = 0; // Sum of all scaleAmp over iterations for 0-1 normalisation
+    public float offsetScale = 2f; // Higher intensity perlin offset causes structured warping, leading to ridging
 
     // Randomisation
     public float offsetX = 100f;
     public float offsetY = 100f;
 
-    private Terrain terrain;
-
-    // Limit the settings
-    private void OnValidate()
-    {
-    }
+    public Terrain terrain;
 
     private void Start()
     {
-        // Preempetively calculate the total terrain height for alignment purposes
-        netAmp = 0;
-        for (int i = 0; i < octaves; i++)
-        {
-            netAmp += baseAmp * Mathf.Pow(scaleAmp, i);
-        }
-
         // Feed the noise into the Terrain component
-        terrain = GetComponent<Terrain>();
-        terrain.terrainData = GenerateTerrain(terrain.terrainData);
+        terrain.terrainData = GenerateTerrain();
+        // Centre the position of the Terrain around 0,0 after generating up.
+        // If you change this, note that generationg is world position sensitive
+        terrain.transform.position = new Vector3(-width / 2, 0, -length / 2);
+
+        // Set terrain collider based on generated data
+        SetTerrainCollider(terrain.terrainData);
     }
 
-    void Update()
+    //Generally only triggered when scene view/inspector is up (non runtime)
+    private void OnValidate()
     {
-        // Add movement for testing
-        //offsetX += Time.deltaTime * 0.5f;
-        //terrain.terrainData = GenerateTerrain(terrain.terrainData);
+        // Feed the noise into the Terrain component
+        terrain.terrainData = GenerateTerrain();
+        // Centre the position of the Terrain around 0,0 after generating up.
+        // If you change this, note that generation is world position sensitive
+        terrain.transform.position = new Vector3(-width / 2, 0, -length / 2);
+
+        // Set terrain collider based on generated data
+        SetTerrainCollider(terrain.terrainData);
     }
 
-    TerrainData GenerateTerrain(TerrainData terrainData)
+    private void SetTerrainCollider(TerrainData terrainData)
     {
+        // Get or add the TerrainCollider component to the same GameObject
+        TerrainCollider terrainCollider = gameObject.GetComponent<TerrainCollider>();
+        if (terrainCollider == null)
+        {
+            terrainCollider = gameObject.AddComponent<TerrainCollider>();
+        }
+        // Assign the generated TerrainData to the TerrainCollider
+        terrainCollider.terrainData = terrainData;
+    }
+
+    private TerrainData GenerateTerrain()
+    {
+        TerrainData terrainData = new TerrainData();
         terrainData.heightmapResolution = width + 1;
-        terrainData.size = new Vector3(width, baseAmp * netAmp, length); // Sets the dimensions of the terrain
-        float[,] generatedHeights = GenerateHeights();
-        terrainData.SetHeights(0, 0, generatedHeights); //0,0 is the starting point
+        terrainData.size = new Vector3(width, baseAmp, length); // Sets the dimensions of the terrain
+        terrainData.SetHeights(0, 0, GenerateHeights()); //0,0 is the starting point
 
-        SetTextureWeights(terrain.terrainData, generatedHeights); // Texture stuff based on height
+        //SetTextureWeights(terrainData, generatedHeights); // TODO Texture alpha mapping based on height to implement later on
 
         return terrainData;
     }
 
     /**
-     * Generate a warped brownian [width, height] array that contains series of heights between 0 and 1
+     * Generate a warped brownian (stacked perlin) array with heights based on scaling parameters
+     * Output is from 0-1 as that is what SetHeights() expects.
+     * Scaling parameters: (width, height, octaves, scaleFreq, scaleAmp, offsetScale)
      */
     float[,] GenerateHeights()
     {
+        // Combined max scale after combining all octaves
+        float netAmp = 0;
+        for (int i = 0; i < octaves; i++)
+        {
+            netAmp += Mathf.Pow(scaleAmp, i);
+        }
+
         float[,] heights = new float[width, length];
         for (int x = 0; x < width; x++)
         {
@@ -77,47 +93,44 @@ public class PerlinTerrain : MonoBehaviour
                 for (int i = 0; i < octaves; i++)
                 {
                     float iterAmp = Mathf.Pow(scaleAmp, i);
-                    float iterScale = Mathf.Pow(scaleFreq, i);
-                    heights[x, y] += (CalculateOffsetHeight(x, y, iterScale) * iterAmp);
+                    float iterFreq = baseFreq * Mathf.Pow(scaleFreq, i);
+                    heights[x, y] += (CalculateOffsetHeight(x, y, iterFreq) * iterAmp); // Return 0 to 1 value...
                 }
-                heights[x, y] = heights[x, y] / netAmp; // Normalise to 0-1
+                heights[x, y] = heights[x, y] / netAmp; // Normalise heights
             }
         }
+
+        printRange(heights);
         return heights;
     }
 
     /**
-     * Calculate perlin offset height for a single x,y point.
+     * Calculate perlin height (between 0-1) for a single x,y point.
+     * Adds perlin offset to the height mapping for structured noise (See https://www.youtube.com/watch?v=lctXaT9pxA0)
+     * 
+     * offsetX/Y - randomisation
+     * freq - frequency increase
+     * offsetScale - extent of offset warping
      */
-    float CalculateHeight(int x, int y, float scale)
+    float CalculateOffsetHeight(int x, int y, float freq)
     {
-        float xCoord = (((float)x / width) * scale) + offsetX;
-        float yCoord = (((float)y / length) * scale) + offsetY;
-        return Mathf.PerlinNoise(xCoord, yCoord);
-    }
+        // Calculate the Perlin noise coordinates based on the input position and scale
+        float scaledInputX = (((float)x / width) * freq) + offsetX;
+        float scaledInputY = (((float)y / length) * freq) + offsetY;
 
-    /**
-     * Calculate perlin offset height for a single x,y point.
-     * Adds perlin offset to for structured noise (See https://www.youtube.com/watch?v=lctXaT9pxA0)
-     * Returns a value between 0 and "scale
-     */
-    float CalculateOffsetHeight(int x, int y, float scale)
-    {
-        // Factor in x/y configuration
-        float xCoord = (((float)x / width) * scale) + offsetX;
-        float yCoord = (((float)y / length) * scale) + offsetY;
+        // Get value for "non warped" Perlin noise, from -0.5 to 0.5
+        float perlinNoiseValue = Mathf.PerlinNoise(scaledInputX, scaledInputY) - 0.5f;
 
-        float noiseValue = Mathf.PerlinNoise(xCoord, yCoord) - 0.5f; // Returns value between -0.5 to 0.5
+        // Offset the coordinates based on own position's regular perlin height
+        float perlinOffsetX = scaledInputX - (perlinNoiseValue * offsetScale);
+        float perlinOffsetY = scaledInputY - (perlinNoiseValue * offsetScale);
 
-        // Consider playing with structured offset noise at some point
-        float noisyOffsetX = xCoord - (noiseValue * offsetScale);
-        float noisyOffsetY = yCoord - (noiseValue * offsetScale);
-
-        return Mathf.PerlinNoise(noisyOffsetX, noisyOffsetY);
+        return Mathf.PerlinNoise(perlinOffsetX, perlinOffsetY); // By adding the offset, we can warp the heights
     }
 
     /**
      * Set the texture details for the terrain based on generated heights.
+     * TODO: WIP bounds error
      */
     void SetTextureWeights(TerrainData terrainData, float[,] heights)
     {
@@ -158,14 +171,4 @@ public class PerlinTerrain : MonoBehaviour
 
         terrainData.SetAlphamaps(0, 0, alphaMap);
     }
-}
-
-// Consider mixed 2D texture procedural mix
-// Ep4: Color https://www.youtube.com/watch?v=RDQK1_SWFuc&list=PLFt_AvWsXl0eBW2EiBtl_sxmDtSgZBxB3&index=4
-[System.Serializable]
-public struct TerrainType
-{
-    public string name;
-    public float height;
-    public Color color;
 }
