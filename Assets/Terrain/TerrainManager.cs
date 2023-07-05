@@ -1,7 +1,7 @@
 using UnityEngine;
 
 //Tutorial: https://www.youtube.com/watch?v=vFvwyu_ZKfU
-public class PerlinTerrain : MonoBehaviour
+public class TerrainManager : MonoBehaviour
 {
     // Area settings
     public int width = 256;
