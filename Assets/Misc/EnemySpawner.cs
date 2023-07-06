@@ -71,7 +71,10 @@ public class EnemySpawner : MonoBehaviour
                         spawnHeight,
                         spawnRadius * Mathf.Sin(theta * Mathf.Deg2Rad)
                     );
-                    Instantiate(enemyPrefabToSpawn, spawnPosition, Quaternion.identity);
+                    GameObject newBoid = Instantiate(enemyPrefabToSpawn, spawnPosition, Quaternion.identity);
+                    BoidController boidController = newBoid.GetComponent<BoidController>();
+                    boidController.setDomeProperties(domeRadius, new Vector3(0, 0, 0)); // Assume dome is already at origin TODO: check this
+
                     enemiesToSpawn--;
                     totalSpawned++;
                     if (enemiesToSpawn <= 0)
