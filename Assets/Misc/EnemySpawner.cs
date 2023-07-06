@@ -16,14 +16,14 @@ public class EnemySpawner : MonoBehaviour
 
     public GameObject enemyPrefabToSpawn;
 
-    private int batchSize = 5; // Max to spawn in a single batch
+    private int batchSize = 3; // Max to spawn in a single batch
 
     // Start is called before the first frame update
     void Start()
     {
         domeManager = dome.GetComponent<DomeManager>();
-        float maxSpawnRadius = domeManager.getGroundRadius();
-        Debug.Log("maxRadius: " + maxSpawnRadius);
+        maxSpawnRadius = domeManager.getGroundRadius();
+        domeRadius = domeManager.getGroundRadius();
 
         StartCoroutine(TriggerRandomly());
         StartCoroutine(InstantiateInBatches());
@@ -33,43 +33,43 @@ public class EnemySpawner : MonoBehaviour
         while (true)
         {
             // Wait for a random amount of seconds
-            yield return new WaitForSeconds(Random.Range(1.0f, 5.0f));
+            yield return new WaitForSeconds(Random.Range(0.0f, 2.0f));
             // Call your method here
             enemiesToSpawn += Random.Range(1, 10);
-
-            Debug.Log("enemiesToSpawn: " + enemiesToSpawn);
         }
     }
 
+    // Animating on 
     IEnumerator InstantiateInBatches()
     {
-        while (true) // Outer infinite loop
+        float spawnInterval = 0.1f; // Time in seconds between spawns
+        float timeSinceLastSpawn = 0f;
+        while (true)
         {
-            while (enemiesToSpawn > 0)
+            timeSinceLastSpawn += Time.deltaTime;
+            if (timeSinceLastSpawn >= spawnInterval && enemiesToSpawn > 0)
             {
                 for (int i = 0; i < batchSize; i++)
                 {
                     float spawnRadius = Random.Range(minSpawnRadius, maxSpawnRadius);
                     float theta = Random.Range(0, 360);
-                    float spawnHeight2 = (domeRadius * domeRadius) - (spawnRadius * spawnRadius);
-                    Debug.Log("spawnHeight: " + spawnHeight2 + " spawnRadius: " + spawnRadius + " domeRadius: " + domeRadius);
+                    float spawnHeight = Mathf.Sqrt((domeRadius * domeRadius) - (spawnRadius * spawnRadius));
                     Vector3 spawnPosition = dome.transform.position + new Vector3(
                         spawnRadius * Mathf.Cos(theta * Mathf.Deg2Rad),
-                        Mathf.Sqrt(spawnHeight2),
+                        spawnHeight,
                         spawnRadius * Mathf.Sin(theta * Mathf.Deg2Rad)
                     );
-
-                    Instantiate(enemyPrefabToSpawn, spawnPosition, Quaternion.identity); // Use spawnPosition instead of transform.position
+                    Instantiate(enemyPrefabToSpawn, spawnPosition, Quaternion.identity);
                     enemiesToSpawn--;
-
-                    if (enemiesToSpawn <= 0) // Break out of the loop if no more enemies need to be spawned
+                    if (enemiesToSpawn <= 0)
                         break;
                 }
-
-                yield return null; // Wait for the next frame
+                timeSinceLastSpawn = 0f; // Reset the timer
             }
-
-            yield return new WaitForSeconds(1.0f); // Wait before checking again
+            yield return null; // Wait for the next frame
         }
     }
+
+
+
 }

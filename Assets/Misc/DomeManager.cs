@@ -19,6 +19,11 @@ public class DomeManager : MonoBehaviour
         return groundRadius;
     }
 
+    public float getOverallRadius()
+    {
+        return overallRadius;
+    }
+
     void OnValidate()
     {
         setupDome();
