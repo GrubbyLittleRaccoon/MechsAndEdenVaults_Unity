@@ -7,7 +7,6 @@ public class GameManager : MonoBehaviour
 {
     // Inspector-defined references
     public PlayerInputManager playerInputManager;
-    public Object Terrain; // Need this for sizing, managing enemy spawns etc.
     List<Camera> playerCameras = new List<Camera>();
 
     private void Awake()
