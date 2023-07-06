@@ -46,16 +46,19 @@ public class PlayerController : MonoBehaviour
         cam.localRotation = Quaternion.identity; //Zero initial rotation
     }
 
+    // Handling player controller movement
     private void OnMove(Vector2 moveValue)
     {
         move = moveValue;
     }
 
+    // Handling player controller camera movement
     private void OnLook(Vector2 lookValue)
     {
         look = lookValue;
     }
 
+    // Handling player controller jump
     private void OnJump()
     {
         if (controller.isGrounded)
