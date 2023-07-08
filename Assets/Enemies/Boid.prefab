@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 703945891810608260}
   - component: {fileID: 637233490129315622}
   - component: {fileID: 2947853744901130489}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Boid
   m_TagString: Untagged
   m_Icon: {fileID: 7250588514170254948, guid: 0000000000000000d000000000000000, type: 0}
@@ -98,13 +98,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b1a76198c6a73648a85395f57899d0b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 12
+  maxSpeed: 12
   jumpHeight: 0.5
-  groundCheck: {fileID: 1447873926932334074}
-  groundDistance: 0.4
-  groundMask:
+  terminalVelocity: -15
+  neighborRadius: 5
+  separationAmount: 1.5
+  boidLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 128
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!54 &637233490129315622
 Rigidbody:
   m_ObjectHideFlags: 0
