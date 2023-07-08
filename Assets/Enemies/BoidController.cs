@@ -8,7 +8,8 @@ public class BoidController : MonoBehaviour
     private Rigidbody boidRigidbody;
     public float maxSpeed = 12f;
     public float jumpHeight = 0.5f;
-    public float terminalVelocity = -20f; // Terminal fall velocity, experiment from 10-20
+    public float terminalVelocity = -30f; // Terminal fall velocity, started from -15f
+    public float uprightForce = 5f; // Adjust this value to control how strongly the creatures try to stay upright
 
 
     // Boids algorithm
@@ -37,22 +38,29 @@ public class BoidController : MonoBehaviour
         // Initialize with random forces
         boidRigidbody.velocity = new Vector3(Random.Range(-1f, 1f), 0, Random.Range(-1f, 1f)).normalized;
         boidRigidbody.maxLinearVelocity = maxSpeed;
+
+        // Personal preferences of front-down facing spawning for now
+        transform.rotation = Quaternion.Euler(90, 0, 0);
     }
 
-    // Physics based code better in fixedupdate
+    // Transform updates
+    void Update()
+    {
+        // Set front face position
+        /*
+        if (boidRigidbody.velocity != Vector3.zero)
+        {
+            transform.forward = boidRigidbody.velocity.normalized; // Set forward based on current velocity
+        }*/
+    }
+
+    // Phyiscs/rigidbody updates
     void FixedUpdate()
     {
         // Ground collision detection
         isGrounded = Physics.CheckSphere(transform.position, groundDistance, groundLayer);
-        /*
-        Debug.Log("Debugging isGrounded");
-        Debug.Log(transform.position);
-        Debug.Log(groundDistance);
-        Debug.Log(groundLayer);*/
-
         if (isGrounded)
         {
-            Debug.Log("ground collision detected");
             // Boid forces
             Vector3 alignment = Vector3.zero;
             Vector3 cohesion = Vector3.zero;
@@ -60,6 +68,7 @@ public class BoidController : MonoBehaviour
 
             Collider[] neighbors = Physics.OverlapSphere(transform.position, neighborRadius, boidLayer);
 
+            //Sum of boid effects
             foreach (var neighbor in neighbors)
             {
                 if (neighbor.gameObject != this.gameObject)
@@ -71,6 +80,7 @@ public class BoidController : MonoBehaviour
                 }
             }
 
+            // Averaging boid effects
             if (neighbors.Length > 1)
             {
                 alignment /= neighbors.Length - 1;
@@ -78,28 +88,36 @@ public class BoidController : MonoBehaviour
                 separation /= neighbors.Length - 1;
             }
 
-            Vector3 targetVelocity = alignment + cohesion + separation * separationAmount;
+            Vector3 targetVelocity = alignment + cohesion + (separation * separationAmount);
 
+            // Apply boid steering force
             // Steer towards the target velocity
             Vector3 deltaVelocity = Vector3.Lerp(boidRigidbody.velocity, targetVelocity, Time.deltaTime);
+            // boidRigidbody.AddForce(deltaVelocity);
 
-            // Check if currentVelocity is not a zero vector
-            if (deltaVelocity != Vector3.zero)
-            {
-                transform.forward = deltaVelocity.normalized; // Set forward
-            }
-
-            // Apply the force to the Rigidbody //TODO cap speed
-            boidRigidbody.AddForce(deltaVelocity);
+            // Apply self-righting force
+            Vector3 uprightTorque = Vector3.Cross(transform.up, Vector3.up) * uprightForce; // Assume flat world TODO: Account for tilting terrain
+            boidRigidbody.AddTorque(uprightTorque);
         }
         else
         {
-            //Trying to stop clipping
-            if (boidRigidbody.velocity.y < terminalVelocity) // Cap fall speed
+            // Capping fall speed
+            if (boidRigidbody.velocity.y < terminalVelocity)
             {
-                Debug.Log("capped");
-                boidRigidbody.velocity = new Vector3(boidRigidbody.velocity.x, terminalVelocity, boidRigidbody.velocity.z); // Avoid gliding/sinking from calculation issues
+                boidRigidbody.velocity = new Vector3(boidRigidbody.velocity.x, terminalVelocity, boidRigidbody.velocity.z);
+            }
+            // Delete if clipped through ground
+            if (boidRigidbody.position.y < 0)
+            {
+                this.SelfDestruction();
             }
         }
+    }
+
+    // Wrapping self destruct since there's likely larger implications that'll come up.
+    // TODO: Deal with spawner limit, increase it or something
+    void SelfDestruction()
+    {
+        Destroy(gameObject);
     }
 }

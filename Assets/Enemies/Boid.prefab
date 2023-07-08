@@ -30,7 +30,7 @@ Transform:
   m_GameObject: {fileID: 6317639215654564569}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 131.12912, y: 39.8, z: 48.5}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1, y: 0.75, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -101,6 +101,7 @@ MonoBehaviour:
   maxSpeed: 12
   jumpHeight: 0.5
   terminalVelocity: -15
+  uprightForce: 10
   neighborRadius: 5
   separationAmount: 1.5
   boidLayer:
