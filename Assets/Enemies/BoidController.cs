@@ -6,10 +6,11 @@ public class BoidController : MonoBehaviour
 {
     // Overall movement
     private Rigidbody boidRigidbody;
-    public float maxSpeed = 12f;
+    public float maxSpeed = 50f;
     public float jumpHeight = 0.5f;
     public float terminalVelocity = -30f; // Terminal fall velocity, started from -15f
-    public float uprightForce = 5f; // Adjust this value to control how strongly the creatures try to stay upright
+    public float uprightStrength = 20f; // Strength of staying/becoming upright
+    public float runStrength = 50f; // Strength of overcoming friction and running
 
 
     // Boids algorithm
@@ -47,11 +48,10 @@ public class BoidController : MonoBehaviour
     void Update()
     {
         // Set front face position
-        /*
         if (boidRigidbody.velocity != Vector3.zero)
         {
             transform.forward = boidRigidbody.velocity.normalized; // Set forward based on current velocity
-        }*/
+        }
     }
 
     // Phyiscs/rigidbody updates
@@ -95,9 +95,35 @@ public class BoidController : MonoBehaviour
             Vector3 deltaVelocity = Vector3.Lerp(boidRigidbody.velocity, targetVelocity, Time.deltaTime);
             // boidRigidbody.AddForce(deltaVelocity);
 
-            // Apply self-righting force
-            Vector3 uprightTorque = Vector3.Cross(transform.up, Vector3.up) * uprightForce; // Assume flat world TODO: Account for tilting terrain
-            boidRigidbody.AddTorque(uprightTorque);
+            // Apply self-righting force, assuming flat-ish world
+            // Calculate the rotation needed to upright the object
+            Quaternion toUpright = Quaternion.FromToRotation(transform.up, GetGroundNormal(transform.position));
+            // Convert this to an angle-axis representation
+            float angle;
+            Vector3 axis;
+            toUpright.ToAngleAxis(out angle, out axis);
+            // If the angle is very small, the axis calculation becomes unstable, so don't apply torque
+            if (angle > 0.01f)
+            {
+                // If the angle is more than 180 degrees, angle-axis gives the shortest rotation which will be the wrong direction, so correct for this
+                if (angle > 180f)
+                {
+                    angle -= 360f;
+                }
+                // Calculate the torque to apply
+                Vector3 uprightTorque = angle * axis * uprightStrength;
+                // Apply the torque
+                boidRigidbody.AddTorque(uprightTorque);
+            }
+
+            // Apply acceleration force
+            // For not just converge onto max speed as proof of concept
+            if (boidRigidbody.velocity.magnitude < maxSpeed)
+            {
+                boidRigidbody.AddForce(transform.forward * runStrength);
+            }
+
+            // Apply force to avoid dome
         }
         else
         {
@@ -111,6 +137,21 @@ public class BoidController : MonoBehaviour
             {
                 this.SelfDestruction();
             }
+        }
+    }
+
+    // Upright position of the short-range ground underneath, standard up if this fails
+    Vector3 GetGroundNormal(Vector3 position)
+    {
+        RaycastHit hit;
+        float maxDistance = 1f;
+        if (Physics.Raycast(transform.position, -Vector3.up, out hit, maxDistance))
+        {
+            return hit.normal;
+        }
+        else
+        {
+            return Vector3.up;
         }
     }
 
